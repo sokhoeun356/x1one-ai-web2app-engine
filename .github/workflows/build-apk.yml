@@ -267,13 +267,12 @@ jobs:
           name: x1One-Ai-Web2app-APK
           path: output/x1One-Ai-Web2app-debug.apk
           retention-days: 7
-```[span_0](start_span)[span_0](end_span)[span_1](start_span)[span_1](end_span)[span_2](start_span)[span_2](end_span)
+```[span_7](start_span)[span_7](end_span)[span_8](start_span)[span_8](end_span)[span_9](start_span)[span_9](end_span)
 
 ---
 
+### ជំហានទី ៣៖ រក្សាទុក
+1. បន្ទាប់ពី Paste រួច សូមចុចប៊ូតុង **"Commit changes..."** ពណ៌បៃតងនៅខាងលើស្ដាំ[span_10](start_span)[span_10](end_span)។
+2. ចុចប៊ូតុង **"Commit changes"** ម្តងទៀត[span_11](start_span)[span_11](end_span)។
 
-### ជំហានបន្ទាប់៖
-1. បន្ទាប់ពី Paste កូដខាងលើរួច សូមពិនិត្យមើលថាបន្ទាត់ទី ១ គឺអក្សរ `name: x1One Ai Web2app - Build APK` ពិតប្រាកដមែន[span_3](start_span)[span_3](end_span)។
-2. ចុចប៊ូតុងពណ៌បៃតង **"Commit changes..."** នៅជ្រុងខាងស្ដាំខាងលើ[span_4](start_span)[span_4](end_span)។
-3. ផ្ទាំងតូចមួយនឹងលោតមក រួចចុចប៊ូតុង **"Commit changes"** ម្តងទៀតដើម្បីរក្សាទុក[span_5](start_span)[span_5](end_span)។
-4. ត្រឡប់មកផ្ទាំង **Actions** វិញ នោះអ្នកនឹងឃើញឈ្មោះ **x1One Ai Web2app - Build APK** ព្រមទាំងប៊ូតុង **"Run workflow"** លោតចេញមកធម្មតាវិញភ្លាម[span_6](start_span)[span_6](end_span)!
+ពេលកូដសុទ្ធត្រឹមត្រូវគ្មានជាប់អក្សរក្រៅប្រអប់ ពេលត្រឡប់មកវិញ វានឹងបង្ហាញឈ្មោះ **x1One Ai Web2app - Build APK** ព្រមទាំងប៊ូតុង **"Run workflow"** ពណ៌បៃតងឡើងវិញមិនខាន[span_12](start_span)[span_12](end_span)។
