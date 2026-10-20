@@ -63,10 +63,7 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: "17"
-
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
+          java-version: '17'
 
       - name: Install Android SDK Platform
         shell: bash
@@ -94,182 +91,133 @@ jobs:
           PACKAGE_NAME: ${{ inputs.package_name }}
         run: |
           set -e
-
-          python3 <<'PY'
+          python3 - << 'PY'
           import os
-          import html
-          import re
-          from pathlib import Path
+          import sys
 
-          url = os.environ["WEBSITE_URL"]
-          app_name = os.environ["APP_NAME"]
-          package_name = os.environ["PACKAGE_NAME"]
+          package_name = os.environ.get("PACKAGE_NAME", "com.x1oneai.web2app")
+          app_name = os.environ.get("APP_NAME", "x1One Ai Web2app")
+          url = os.environ.get("WEBSITE_URL", "https://example.com")
 
-          package_path = package_name.replace(".", "/")
+          os.makedirs("android-app/app/src/main/res/values", exist_ok=True)
+          os.makedirs("android-app/gradle/wrapper", exist_ok=True)
 
-          root = Path("android-app")
-          src = root / "app" / "src" / "main"
-          java_dir = src / "java" / package_path
-          res_values = src / "res" / "values"
+          settings_gradle = 'rootProject.name = "Web2App"\ninclude(":app")\n'
+          with open("android-app/settings.gradle", "w", encoding="utf-8") as f:
+              f.write(settings_gradle)
 
-          java_dir.mkdir(parents=True, exist_ok=True)
-          res_values.mkdir(parents=True, exist_ok=True)
-
-          (root / "settings.gradle").write_text(
-              """pluginManagement {
+          root_build_gradle = """
+          buildscript {
               repositories {
                   google()
                   mavenCentral()
-                  gradlePluginPortal()
+              }
+              dependencies {
+                  classpath("com.android.tools.build:gradle:8.5.2")
               }
           }
-
-          dependencyResolutionManagement {
-              repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+          allprojects {
               repositories {
                   google()
                   mavenCentral()
               }
           }
+          """
+          with open("android-app/build.gradle", "w", encoding="utf-8") as f:
+              f.write(root_build_gradle.strip() + "\n")
 
-          rootProject.name = "x1OneAiWeb2app"
-          include(":app")
-          """,
-              encoding="utf-8"
-          )
+          app_build_gradle = f"""
+          plugins {{
+              id("com.android.application")
+          }}
 
-          (root / "build.gradle").write_text(
-              """plugins {
-              id 'com.android.application' version '8.6.1' apply false
-          }
-          """,
-              encoding="utf-8"
-          )
-
-          (root / "gradle.properties").write_text(
-              """android.useAndroidX=true
-          android.nonTransitiveRClass=true
-          """,
-              encoding="utf-8"
-          )
-
-          app_gradle = """plugins {
-              id 'com.android.application'
-          }
-
-          android {
-              namespace '%s'
+          android {{
+              namespace "{package_name}"
               compileSdk 35
 
-              defaultConfig {
-                  applicationId '%s'
-                  minSdk 23
+              defaultConfig {{
+                  applicationId "{package_name}"
+                  minSdk 21
                   targetSdk 35
                   versionCode 1
                   versionName "1.0"
-              }
-          }
+              }}
 
-          dependencies {
-              implementation 'androidx.appcompat:appcompat:1.7.0'
-          }
-          """ % (package_name, package_name)
+              buildTypes {{
+                  release {{
+                      minifyEnabled false
+                  }}
+                  debug {{
+                      debuggable true
+                  }}
+              }}
 
-          (root / "app").mkdir(parents=True, exist_ok=True)
-          (root / "app" / "build.gradle").write_text(
-              app_gradle,
-              encoding="utf-8"
-          )
+              compileOptions {{
+                  sourceCompatibility JavaVersion.VERSION_17
+                  targetCompatibility JavaVersion.VERSION_17
+              }}
+          }}
 
-          safe_app_name = html.escape(app_name, quote=True)
-          safe_url = html.escape(url, quote=True)
+          dependencies {{
+              implementation("androidx.appcompat:appcompat:1.7.0")
+          }}
+          """
+          with open("android-app/app/build.gradle", "w", encoding="utf-8") as f:
+              f.write(app_build_gradle.strip() + "\n")
 
-          manifest = """<?xml version="1.0" encoding="utf-8"?>
+          manifest = f"""<?xml version="1.0" encoding="utf-8"?>
           <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-
               <uses-permission android:name="android.permission.INTERNET" />
-
               <application
                   android:allowBackup="true"
                   android:label="@string/app_name"
-                  android:theme="@style/AppTheme"
-                  android:usesCleartextTraffic="true">
-
+                  android:supportsRtl="true"
+                  android:theme="@style/Theme.AppCompat.Light.NoActionBar">
                   <activity
                       android:name=".MainActivity"
                       android:exported="true">
-
                       <intent-filter>
                           <action android:name="android.intent.action.MAIN" />
                           <category android:name="android.intent.category.LAUNCHER" />
                       </intent-filter>
-
                   </activity>
-
               </application>
-
           </manifest>
           """
+          with open("android-app/app/src/main/AndroidManifest.xml", "w", encoding="utf-8") as f:
+              f.write(manifest.strip() + "\n")
 
-          (src / "AndroidManifest.xml").write_text(
-              manifest,
-              encoding="utf-8"
-          )
-
-          strings = """<?xml version="1.0" encoding="utf-8"?>
-          <resources>
-              <string name="app_name">%s</string>
-              <string name="website_url">%s</string>
-          </resources>
-          """ % (safe_app_name, safe_url)
-
-          (res_values / "strings.xml").write_text(
-              strings,
-              encoding="utf-8"
-          )
-
-          styles = """<?xml version="1.0" encoding="utf-8"?>
-          <resources>
-
-              <style name="AppTheme"
-                  parent="android:style/Theme.Material.Light.NoActionBar">
-                  <item name="android:fontFamily">sans</item>
-                  <item name="android:windowActionModeOverlay">true</item>
-                  <item name="android:colorAccent">#000000</item>
-              </style>
-
+          strings_xml = f"""<resources>
+              <string name="app_name">{app_name}</string>
           </resources>
           """
+          with open("android-app/app/src/main/res/values/strings.xml", "w", encoding="utf-8") as f:
+              f.write(strings_xml.strip() + "\n")
 
-          (res_values / "styles.xml").write_text(
-              styles,
-              encoding="utf-8"
-          )
+          pkg_path = package_name.replace(".", "/")
+          java_dir = os.path.join("android-app/app/src/main/java", pkg_path)
+          os.makedirs(java_dir, exist_ok=True)
 
-          java = """package %s;
+          java_code = f"""package {package_name};
 
           import android.annotation.SuppressLint;
           import android.os.Bundle;
           import android.webkit.WebSettings;
           import android.webkit.WebView;
           import android.webkit.WebViewClient;
-
           import androidx.appcompat.app.AppCompatActivity;
 
-          public class MainActivity extends AppCompatActivity {
-
+          public class MainActivity extends AppCompatActivity {{
               private WebView webView;
 
               @SuppressLint("SetJavaScriptEnabled")
               @Override
-              protected void onCreate(Bundle savedInstanceState) {
+              protected void onCreate(Bundle savedInstanceState) {{
                   super.onCreate(savedInstanceState);
-
                   webView = new WebView(this);
                   setContentView(webView);
 
                   WebSettings settings = webView.getSettings();
-
                   settings.setJavaScriptEnabled(true);
                   settings.setDomStorageEnabled(true);
                   settings.setDatabaseEnabled(true);
@@ -277,30 +225,23 @@ jobs:
                   settings.setUseWideViewPort(true);
 
                   webView.setWebViewClient(new WebViewClient());
-
-                  webView.loadUrl(getString(R.string.website_url));
-              }
+                  webView.loadUrl("{url}");
+              }}
 
               @Override
-              public void onBackPressed() {
-                  if (webView.canGoBack()) {
+              public void onBackPressed() {{
+                  if (webView != null && webView.canGoBack()) {{
                       webView.goBack();
-                  } else {
+                  }} else {{
                       super.onBackPressed();
-                  }
-              }
-          }
-          """ % package_name
-
-          (java_dir / "MainActivity.java").write_text(
-              java,
-              encoding="utf-8"
-          )
+                  }}
+              }}
+          }}
+          """
+          with open(os.path.join(java_dir, "MainActivity.java"), "w", encoding="utf-8") as f:
+              f.write(java_code.strip() + "\n")
 
           print("Android project created successfully.")
-          print("Package:", package_name)
-          print("URL:", url)
-          print("App:", app_name)
           PY
 
       - name: Build Debug APK
@@ -315,11 +256,9 @@ jobs:
         run: |
           set -e
           mkdir -p output
-
           cp \
             android-app/app/build/outputs/apk/debug/app-debug.apk \
             "output/x1One-Ai-Web2app-debug.apk"
-
           ls -lh output/
 
       - name: Upload APK
@@ -328,3 +267,4 @@ jobs:
           name: x1One-Ai-Web2app-APK
           path: output/x1One-Ai-Web2app-debug.apk
           retention-days: 7
+```[span_8](start_span)[span_8](end_span)[span_9](start_span)[span_9](end_span)[span_10](start_span)[span_10](end_span)
